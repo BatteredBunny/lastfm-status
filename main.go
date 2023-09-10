@@ -5,6 +5,8 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v7/limiter"
 	"html/template"
 	"io"
 	"log"
@@ -100,14 +102,18 @@ func GetInfo(username string) (c CacheField, err error) {
 	return
 }
 
+var StatusTemplate *template.Template
+
 func main() {
-	port := flag.Uint("port", 8080, "port to run server on")
+	port := *flag.Uint("port", 8080, "port to run server on")
 	flag.DurationVar(&CacheDuration, "cache-length", CacheDuration, "how long to cache an entry for")
+	ratelimiting := *flag.Bool("ratelimit", true, "enables ratelimiting for /status api")
 	flag.Parse()
 
 	go CacheCleaner()
 
-	statusTemplate, err := template.ParseFS(templateFile, "status.gohtml")
+	var err error
+	StatusTemplate, err = template.ParseFS(templateFile, "status.gohtml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,50 +124,57 @@ func main() {
 
 	http.Handle("/static/", http.FileServer(http.FS(staticFiles)))
 
-	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		username := r.FormValue("username")
-		if username == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Please insert an username")
+	if ratelimiting {
+		ratelimit := tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+		http.Handle("/status", tollbooth.LimitFuncHandler(ratelimit, statusHandler))
+	} else {
+		http.HandleFunc("/status", statusHandler)
+	}
+
+	log.Printf("Starting server on :%d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	if username == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Please insert an username")
+		return
+	}
+
+	var err error
+	v, valid := Cache[username]
+	if !valid {
+		log.Printf("No cache for %s, refreshing data\n", username)
+		v, err = GetInfo(username)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
 			return
 		}
 
-		var err error
-		v, valid := Cache[username]
-		if !valid {
-			log.Printf("No cache for %s, refreshing data\n", username)
-			v, err = GetInfo(username)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
-				return
-			}
-
-			Cache[username] = v
-		} else if CacheExpired(v.CacheTime) {
-			log.Printf("Cache is too old for %s, refreshing data\n", username)
-			v, err = GetInfo(username)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
-				return
-			}
-
-			Cache[username] = v
-		} else {
-			log.Printf("Getting info for %s from cache\n", username)
+		Cache[username] = v
+	} else if CacheExpired(v.CacheTime) {
+		log.Printf("Cache is too old for %s, refreshing data\n", username)
+		v, err = GetInfo(username)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
+			return
 		}
 
-		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+		Cache[username] = v
+	} else {
+		log.Printf("Getting info for %s from cache\n", username)
+	}
 
-		NotPlaying := v.TemplateInput.Author == ""
-		if NotPlaying {
-		} else {
-			statusTemplate.Execute(w, v.TemplateInput)
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
+	NotPlaying := v.TemplateInput.Author == ""
+	if !NotPlaying {
+		if err = StatusTemplate.Execute(w, v.TemplateInput); err != nil {
+			log.Println("WARNING:", err)
 		}
-
-	})
-
-	log.Printf("Starting server on :%d\n", *port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	}
 }

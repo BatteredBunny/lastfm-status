@@ -2,7 +2,7 @@
     src = ./.;
 
     name = "lastfm-status";
-    vendorSha256 = "sha256-UvQ+Q7op30ox34rO2BXcCE6vLDFsF27pVytMAVpCi2U=";
+    vendorSha256 = "sha256-HD5lkUt//BD2guQgw/Q9q3XRhEMflkunfSSuJIhReok=";
 
     ldflags = [
         "-s"
