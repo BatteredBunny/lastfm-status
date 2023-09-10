@@ -105,9 +105,9 @@ func GetInfo(username string) (c CacheField, err error) {
 var StatusTemplate *template.Template
 
 func main() {
-	port := *flag.Uint("port", 8080, "port to run server on")
+	port := flag.Uint("port", 8080, "port to run server on")
 	flag.DurationVar(&CacheDuration, "cache-length", CacheDuration, "how long to cache an entry for")
-	ratelimiting := *flag.Bool("ratelimit", true, "enables ratelimiting for /status api")
+	ratelimiting := flag.Bool("ratelimit", true, "enables ratelimiting for /status api")
 	flag.Parse()
 
 	go CacheCleaner()
@@ -124,15 +124,15 @@ func main() {
 
 	http.Handle("/static/", http.FileServer(http.FS(staticFiles)))
 
-	if ratelimiting {
+	if *ratelimiting {
 		ratelimit := tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
 		http.Handle("/status", tollbooth.LimitFuncHandler(ratelimit, statusHandler))
 	} else {
 		http.HandleFunc("/status", statusHandler)
 	}
 
-	log.Printf("Starting server on :%d\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Printf("Starting server on :%d\n", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
