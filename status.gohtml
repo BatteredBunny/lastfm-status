@@ -1,0 +1,27 @@
+<link rel="stylesheet" href="/static/status.css">
+<div class="currently-playing">
+    <a href="{{ .TitleUrl }}">
+        <img src="{{ .CoverArt }}">
+    </a>
+    <div class="player-info">
+        <div>
+            <span class="player-info-title">
+                <a href="{{ .TitleUrl }}">{{ .Title }}</a>
+                by
+                <a href="{{ .AuthorUrl }}">{{ .Author }}</a>
+            </span>
+        </div>
+
+        <div class="bottom-row">
+            <div class="player-status">
+                <div class="wave"></div>
+                <small>Scrobbling now</small>
+            </div>
+
+            <a class="player-whos-scrobbling" href="{{ .AccountUrl }}">
+                {{ .AccountName }}
+            </a>
+        </div>
+    </div>
+</div>
+</div>
