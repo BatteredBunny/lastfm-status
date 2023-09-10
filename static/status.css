@@ -21,6 +21,9 @@
     --fourth-color: #A8221D;
 }
 
+html, body {
+    margin: 0px;
+}
 .currently-playing {
     height: 64px;
     border: 1px solid var(--player-main-color);
