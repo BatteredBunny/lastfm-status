@@ -8,7 +8,7 @@ Simple api for showing currently scrobbling song on website
 
 ```html
 <iframe
-    src="http://localhost:8080/status?username=YourLastfmUsername"
+    src="https://lastfm.catnip.ee/status?username=YourLastfmUsername"
 ></iframe>
 ```
 
