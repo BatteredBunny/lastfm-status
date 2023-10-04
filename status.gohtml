@@ -7,15 +7,15 @@
 </head>
 <body>
 <div class="currently-playing">
-    <a href="{{ .TitleUrl }}">
+    <a href="{{ .TitleUrl }}" target="_blank" rel="noreferrer noopener">
         <img src="{{ .CoverArt }}">
     </a>
     <div class="player-info">
         <div>
             <span class="player-info-title">
-                <a href="{{ .TitleUrl }}">{{ .Title }}</a>
+                <a href="{{ .TitleUrl }}" target="_blank" rel="noreferrer noopener">{{ .Title }}</a>
                 by
-                <a href="{{ .AuthorUrl }}">{{ .Author }}</a>
+                <a href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer noopener">{{ .Author }}</a>
             </span>
         </div>
 
@@ -25,7 +25,7 @@
                 <small>Scrobbling now</small>
             </div>
 
-            <a class="player-whos-scrobbling" href="{{ .AccountUrl }}">
+            <a class="player-whos-scrobbling" href="{{ .AccountUrl }}" target="_blank" rel="noreferrer noopener">
                 {{ .AccountName }}
             </a>
         </div>
