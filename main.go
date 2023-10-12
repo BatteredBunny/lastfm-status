@@ -5,13 +5,14 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"github.com/didip/tollbooth/v7"
-	"github.com/didip/tollbooth/v7/limiter"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v7/limiter"
 
 	_ "embed"
 
@@ -33,6 +34,7 @@ type TemplateInput struct {
 
 	AccountUrl  string
 	AccountName string
+	Refresh     float64
 }
 
 type CacheField struct {
@@ -173,6 +175,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 	NotPlaying := v.TemplateInput.Author == ""
 	if !NotPlaying {
+		v.TemplateInput.Refresh = CacheDuration.Seconds()
 		if err = StatusTemplate.Execute(w, v.TemplateInput); err != nil {
 			log.Println("WARNING:", err)
 		}
