@@ -1,17 +1,18 @@
-{ pkgs, buildGoModule, lib }: buildGoModule rec {
-    src = ./.;
+{buildGoModule}:
+buildGoModule {
+  src = ./.;
 
-    name = "lastfm-status";
-    vendorSha256 = "sha256-HD5lkUt//BD2guQgw/Q9q3XRhEMflkunfSSuJIhReok=";
+  name = "lastfm-status";
+  vendorHash = "sha256-GyfvQxig+ZEzGwdbBluBDuUizhijkXmHzgJjWPjCXdI=";
 
-    ldflags = [
-        "-s"
-        "-w"
-    ];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
-    meta = {
-        description = "Simple api for showing currently scrobbling song on website ";
-        homepage = "https://github.com/ayes-web/lastfm-status¬";
-        mainProgram = "lastfm-status";
-    };
+  meta = {
+    description = "Simple api for showing currently scrobbling song on website ";
+    homepage = "https://github.com/BatteredBunny/lastfm-status";
+    mainProgram = "lastfm-status";
+  };
 }
