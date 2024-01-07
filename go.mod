@@ -1,6 +1,6 @@
-module github.com/ayes-web/lastfm-status
+module github.com/BatteredBunny/lastfm-status
 
-go 1.20
+go 1.21
 
 require (
 	astuart.co/goq v1.0.0
@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.1 // indirect
-	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/go-pkgz/expirable-cache v0.1.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/go-pkgz/expirable-cache v1.0.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 )

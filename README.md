@@ -18,12 +18,12 @@ Simple api for showing currently scrobbling song on website
 
 ## Running manually
 ```
-git clone https://github.com/ayes-web/lastfm-status
+git clone https://github.com/BatteredBunny/lastfm-status
 cd lastfm-status
 go run . --port 8080
 ```
 
 ## Running with nix
 ```
-nix run github:ayes-web/lastfm-status
+nix run github:BatteredBunny/lastfm-status
 ```
