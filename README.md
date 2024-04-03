@@ -4,7 +4,7 @@ Simple api for showing currently scrobbling song on website
 
 ![Example iframe usage](example.png)
 
-## Iframe usage
+## Embedding it into your site
 
 ```html
 <iframe
