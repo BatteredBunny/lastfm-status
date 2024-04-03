@@ -5,10 +5,11 @@
   };
 
   outputs = {
+    self,
     nixpkgs,
     flake-utils,
     ...
-  }:
+  } @ inputs:
     flake-utils.lib.eachDefaultSystem (
       system: let
         pkgs = import nixpkgs {
@@ -16,6 +17,8 @@
         };
       in
         with pkgs; {
+          nixosModules.default = import ./module.nix inputs;
+
           devShells.default = mkShell {
             buildInputs = with pkgs; [
               go
