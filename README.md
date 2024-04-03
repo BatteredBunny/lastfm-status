@@ -38,6 +38,10 @@ inputs = {
 
 ```nix
 # configuration.nix
+imports = [
+    inputs.lastfm-status.nixosModules.${builtins.currentSystem}.default
+];
+
 services.lastfm-status = {
     enable = true;
     port = 8080;
