@@ -27,3 +27,24 @@ go run . --port 8080
 ```
 nix run github:BatteredBunny/lastfm-status
 ```
+
+## Running as service on nixos
+```nix
+# flake.nix
+inputs = {
+    lastfm-status.url = "github:BatteredBunny/lastfm-status";
+};
+```
+
+```nix
+# configuration.nix
+services.lastfm-status = {
+    enable = true;
+    port = 8080;
+
+    # Optional parameters
+    package = inputs.lastfm-status.packages.${builtins.currentSystem}.default;
+    cacheLength = "1m";
+    enableRatelimiting = true;
+};
+```
