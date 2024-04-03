@@ -13,7 +13,7 @@ in {
 
     package = lib.mkOption {
       description = "package to use";
-      default = self.packages.${system}.default;
+      default = inputs.self.packages.${system}.default;
     };
 
     cacheLength = lib.mkOption {
