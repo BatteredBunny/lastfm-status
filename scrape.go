@@ -14,15 +14,15 @@ type RawPageInfo struct {
 }
 
 type RawCurrentlyScrobbling struct {
-	Title     string `goquery:".chartlist-name a"`
-	TitleUrl  string `goquery:".chartlist-name a,[href]"`
-	Author    string `goquery:".chartlist-artist a"`
-	AuthorUrl string `goquery:".chartlist-artist a,[href]"`
-	CoverArt  string `goquery:".chartlist-image .cover-art img,[src]"`
+	SongTitle   string `goquery:".chartlist-name a"`
+	SongUrl     string `goquery:".chartlist-name a,[href]"`
+	AuthorName  string `goquery:".chartlist-artist a"`
+	AuthorUrl   string `goquery:".chartlist-artist a,[href]"`
+	CoverArtUrl string `goquery:".chartlist-image .cover-art img,[src]"`
 }
 
 // GetCurrentlyScrobbling fetches info from last.fm
-func GetCurrentlyScrobbling(username string) (c CacheField, err error) {
+func GetCurrentlyScrobbling(username string) (c UserCache, err error) {
 	accountUrl := "https://www.last.fm/user/" + username
 	resp, err := http.Get(accountUrl)
 	if err != nil {
@@ -39,12 +39,12 @@ func GetCurrentlyScrobbling(username string) (c CacheField, err error) {
 		return
 	}
 
-	c = CacheField{
-		SongTitle:   rawInfo.CurrentlyScrobblingSong.Title,
-		SongUrl:     "https://www.last.fm" + rawInfo.CurrentlyScrobblingSong.TitleUrl,
-		AuthorName:  rawInfo.CurrentlyScrobblingSong.Author,
+	c = UserCache{
+		SongTitle:   rawInfo.CurrentlyScrobblingSong.SongTitle,
+		SongUrl:     "https://www.last.fm" + rawInfo.CurrentlyScrobblingSong.SongUrl,
+		AuthorName:  rawInfo.CurrentlyScrobblingSong.AuthorName,
 		AuthorUrl:   "https://www.last.fm" + rawInfo.CurrentlyScrobblingSong.AuthorUrl,
-		CoverArtUrl: rawInfo.CurrentlyScrobblingSong.CoverArt,
+		CoverArtUrl: rawInfo.CurrentlyScrobblingSong.CoverArtUrl,
 		AccountName: username,
 		AccountUrl:  accountUrl,
 

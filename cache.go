@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type CacheField struct {
+type UserCache struct {
 	SongTitle   string
 	SongUrl     string
 	AuthorName  string
@@ -17,8 +17,8 @@ type CacheField struct {
 	CacheTime time.Time
 }
 
-func (c CacheField) Expired(CacheDuration time.Duration) bool {
-	return c.CacheTime.Before(time.Now().Add(-CacheDuration))
+func (u UserCache) Expired(CacheDuration time.Duration) bool {
+	return u.CacheTime.Before(time.Now().Add(-CacheDuration))
 }
 
 func (app *Application) CacheCleaner() {

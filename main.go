@@ -4,23 +4,27 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
-	"net/http"
 	"time"
 
 	_ "embed"
+
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v7/limiter"
+	"github.com/gin-gonic/gin"
 )
 
-//go:embed static/*
+//go:embed static
 var StaticFiles embed.FS
 
-//go:embed status.gohtml
-var TemplateFile embed.FS
+//go:embed template
+var Templates embed.FS
 
 type Application struct {
-	StatusTemplate *template.Template
-	Cache          map[string]CacheField
+	Cache  map[string]UserCache
+	Router *gin.Engine
+
+	Ratelimiter *limiter.Limiter
 
 	Config Config
 }
@@ -41,26 +45,24 @@ func ParseConfig() (cfg Config) {
 	return cfg
 }
 
-func (app *Application) SetupTemplates() (err error) {
-	app.StatusTemplate, err = template.ParseFS(TemplateFile, "status.gohtml")
-	return
+func (app *Application) SetupRatelimiter() {
+	if app.Config.RateLimiting {
+		app.Ratelimiter = tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+	}
 }
 
 func main() {
 	app := Application{
-		Cache:  make(map[string]CacheField),
+		Cache:  make(map[string]UserCache),
 		Config: ParseConfig(),
 	}
 
-	if err := app.SetupTemplates(); err != nil {
+	app.SetupRatelimiter()
+	if err := app.SetupRouter(); err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	go app.CacheCleaner()
 
-	app.SetupHandlers()
-
-	log.Printf("Starting server on :%d\n", app.Config.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", app.Config.Port), nil))
+	log.Fatal(app.Router.Run(fmt.Sprintf(":%d", app.Config.Port)))
 }

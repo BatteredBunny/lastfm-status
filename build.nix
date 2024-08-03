@@ -1,9 +1,9 @@
-{buildGoModule}:
+{ buildGoModule }:
 buildGoModule {
   src = ./.;
 
   name = "lastfm-status";
-  vendorHash = "sha256-RIqLmOElPG0D2wLSP5TJBzPJpNgKkiG0HyFlDHBjwpw=";
+  vendorHash = "sha256-XkN5Hjld0vFPFPZJ3gkBdhqm5n71bkzN8MnQkGZ4UvI=";
 
   ldflags = [
     "-s"

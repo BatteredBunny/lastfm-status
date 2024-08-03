@@ -1,32 +1,42 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/didip/tollbooth/v7"
-	"github.com/didip/tollbooth/v7/limiter"
+	"github.com/gin-gonic/gin"
 )
 
-func (app *Application) SetupHandlers() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Last.fm status running")
-	})
+func (app *Application) SetupRouter() (err error) {
+	gin.SetMode(gin.ReleaseMode)
 
-	http.Handle("/static/", http.FileServer(http.FS(StaticFiles)))
+	app.Router = gin.Default()
+	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(Templates, "template/status.gohtml")))
 
-	if *&app.Config.RateLimiting {
-		ratelimit := tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
-		http.Handle("/status", tollbooth.LimitFuncHandler(ratelimit, app.StatusHandler))
-	} else {
-		http.HandleFunc("/status", app.StatusHandler)
+	app.Router.StaticFileFS("/", "static/html/main.html", http.FS(StaticFiles))
+
+	var sub fs.FS
+	sub, err = fs.Sub(StaticFiles, "static/css")
+	if err != nil {
+		return
 	}
+
+	app.Router.StaticFS("/css", http.FS(sub))
+
+	if app.Config.RateLimiting {
+		log.Println("Enabling ratelimiting")
+		app.Router.GET("/status", app.RatelimiterMiddleware(), app.StatusHandler)
+	} else {
+		app.Router.GET("/status", app.StatusHandler)
+	}
+
+	return
 }
 
 type TemplateInput struct {
-	CacheField
+	UserCache
 
 	Refresh float64
 	Light   bool
@@ -34,10 +44,20 @@ type TemplateInput struct {
 	Dynamic bool
 }
 
-func (app *Application) StatusHandler(w http.ResponseWriter, r *http.Request) {
-	theme := r.FormValue("theme")
+type StatusQuery struct {
+	Theme    string `form:"theme"` // light, dark, dynamic
+	Username string `form:"username" binding:"required"`
+}
+
+func (app *Application) StatusHandler(c *gin.Context) {
+	var input StatusQuery
+	if err := c.BindQuery(&input); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
 	var light, dark, dynamic bool
-	switch theme {
+	switch input.Theme {
 	case "light":
 		light = true
 	case "dark":
@@ -48,53 +68,30 @@ func (app *Application) StatusHandler(w http.ResponseWriter, r *http.Request) {
 		dynamic = true
 	}
 
-	username := r.FormValue("username")
-	if username == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Please insert an username")
-		return
-	}
-
 	var err error
-	cache, valid := app.Cache[username]
-	if !valid {
-		log.Printf("No cache for %s, refreshing data\n", username)
-		cache, err = GetCurrentlyScrobbling(username)
+	cache, exists := app.Cache[input.Username]
+	if !exists || cache.Expired(app.Config.CacheDuration) {
+		log.Printf("Refreshing cache for %s\n", input.Username)
+		cache, err = GetCurrentlyScrobbling(input.Username)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
+			c.String(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
 			return
 		}
 
-		app.Cache[username] = cache
-	} else if cache.Expired(app.Config.CacheDuration) {
-		log.Printf("Cache has expired for %s, refreshing data\n", username)
-		cache, err = GetCurrentlyScrobbling(username)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError))
-			return
-		}
-
-		app.Cache[username] = cache
+		app.Cache[input.Username] = cache
 	} else {
-		log.Printf("Getting info for %s from cache\n", username)
+		log.Printf("Getting info for %s from cache\n", input.Username)
 	}
-
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 
 	NotPlaying := cache.AuthorName == ""
 	if !NotPlaying {
-		tmpi := TemplateInput{
+		c.HTML(http.StatusOK, "status.gohtml", TemplateInput{
 			Refresh: app.Config.CacheDuration.Seconds(),
 			Light:   light,
 			Dark:    dark,
 			Dynamic: dynamic,
 
-			CacheField: cache,
-		}
-		if err = app.StatusTemplate.Execute(w, tmpi); err != nil {
-			log.Println("WARNING:", err)
-		}
+			UserCache: cache,
+		})
 	}
 }
