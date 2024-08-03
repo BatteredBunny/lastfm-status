@@ -39,7 +39,7 @@ inputs = {
 ```nix
 # configuration.nix
 imports = [
-    inputs.lastfm-status.nixosModules.${builtins.currentSystem}.default
+    inputs.lastfm-status.nixosModules.default
 ];
 
 services.lastfm-status = {

@@ -1,36 +1,31 @@
-inputs: {
-  pkgs,
-  config ? pkgs.config,
-  lib ? pkgs.lib,
-  system,
-  self,
-  ...
-}: let
+{ pkgs
+, config ? pkgs.config
+, lib ? pkgs.lib
+, ...
+}:
+let
   cfg = config.services.lastfm-status;
-in {
+in
+{
   options.services.lastfm-status = {
     enable = lib.mkEnableOption "lastfm-status";
 
     package = lib.mkOption {
       description = "package to use";
-      default = inputs.self.packages.${system}.default;
+      default = pkgs.callPackage ./build.nix { };
     };
 
     cacheLength = lib.mkOption {
       type = lib.types.str;
       default = "1m";
-      description = "how long to cache an entry for, accepts a golang time duration";
+      description = "How long to cache an entry for, accepts a golang time duration";
     };
 
-    enableRatelimiting = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "if to enable ratelimiting on the api";
-    };
+    enableRatelimiting = lib.mkEnableOption "Enable ratelimiting on the api" // { default = true; };
 
     port = lib.mkOption {
       type = lib.types.int;
-      description = "port to run http api on";
+      description = "Port to run http api on";
     };
   };
 
@@ -41,7 +36,7 @@ in {
         DynamicUser = true;
         ProtectSystem = "full";
         ProtectHome = "yes";
-        DeviceAllow = [""];
+        DeviceAllow = [ "" ];
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         PrivateDevices = true;
@@ -60,7 +55,7 @@ in {
         ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting}";
         Restart = "always";
       };
-      wantedBy = ["default.target"];
+      wantedBy = [ "default.target" ];
     };
   };
 }
