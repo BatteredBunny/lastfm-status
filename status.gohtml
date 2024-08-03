@@ -5,18 +5,26 @@
     <meta charset="UTF-8">
     <title>Lastfm status</title>
     <link rel="stylesheet" href="/static/status.css">
+
+    {{if and .Dynamic}}
+    <link rel="stylesheet" href="/static/dynamic.css">
+    {{else if .Light}}
+    <link rel="stylesheet" href="/static/light.css">
+    {{else if .Dark}}
+    <link rel="stylesheet" href="/static/dark.css">
+    {{end}}
 </head>
 <body>
 <div class="currently-playing">
-    <a href="{{ .TitleUrl }}" target="_blank" rel="noreferrer noopener">
-        <img src="{{ .CoverArt }}">
+    <a href="{{ .SongUrl }}" target="_blank" rel="noreferrer noopener">
+        <img src="{{ .CoverArtUrl }}">
     </a>
     <div class="player-info">
         <div>
             <span class="player-info-title">
-                <a href="{{ .TitleUrl }}" target="_blank" rel="noreferrer noopener">{{ .Title }}</a>
+                <a href="{{ .SongUrl }}" target="_blank" rel="noreferrer noopener">{{ .SongTitle }}</a>
                 by
-                <a href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer noopener">{{ .Author }}</a>
+                <a href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer noopener">{{ .AuthorName }}</a>
             </span>
         </div>
 
