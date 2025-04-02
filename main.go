@@ -21,7 +21,9 @@ var StaticFiles embed.FS
 var Templates embed.FS
 
 type Application struct {
-	Cache  map[string]UserCache
+	UserListeningCache     map[string]UserListeningCache
+	UserMonthlyAlbumsCache map[string]UserMonthlyAlbumsCache
+
 	Router *gin.Engine
 
 	Ratelimiter *limiter.Limiter
@@ -30,8 +32,10 @@ type Application struct {
 }
 
 type Config struct {
-	CacheDuration time.Duration
-	Port          uint
+	CacheDuration        time.Duration // Currently listening cache duration
+	MonthlyCacheDuration time.Duration // Monthly top artists cache duration
+
+	Port uint
 
 	RateLimiting bool
 }
@@ -39,6 +43,7 @@ type Config struct {
 func ParseConfig() (cfg Config) {
 	flag.UintVar(&cfg.Port, "port", 8080, "port to run server on")
 	flag.DurationVar(&cfg.CacheDuration, "cache-length", time.Minute, "how long to cache an entry for")
+	flag.DurationVar(&cfg.MonthlyCacheDuration, "monthly-cache-length", time.Hour, "how long to cache an entry for")
 	flag.BoolVar(&cfg.RateLimiting, "ratelimit", true, "enables ratelimiting for /status api")
 	flag.Parse()
 
@@ -53,8 +58,9 @@ func (app *Application) SetupRatelimiter() {
 
 func main() {
 	app := Application{
-		Cache:  make(map[string]UserCache),
-		Config: ParseConfig(),
+		UserListeningCache:     make(map[string]UserListeningCache),
+		UserMonthlyAlbumsCache: make(map[string]UserMonthlyAlbumsCache),
+		Config:                 ParseConfig(),
 	}
 
 	app.SetupRatelimiter()

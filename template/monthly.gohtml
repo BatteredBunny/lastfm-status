@@ -1,0 +1,21 @@
+<meta http-equiv="refresh" content="{{ .Refresh }}">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lastfm monthly plays</title>
+</head>
+<body>
+<div class="albums">
+    {{range $val := .Albums }}
+        <div class="album">
+            <div class="album-name">{{ $val.Name }}</div>
+            <a class="artist-name" href="{{ $val.ArtistUrl }}">{{ $val.ArtistName }}</a>
+            <img class="album-cover-art" src="{{ $val.CoverArt }}">
+            <div class="album-plays">{{ $val.Plays }}</div>
+        </div>
+    {{end}}
+</div>
+</div>
+</body>
+</html>

@@ -13,7 +13,7 @@ func (app *Application) SetupRouter() (err error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	app.Router = gin.Default()
-	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(Templates, "template/status.gohtml")))
+	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(Templates, "template/status.gohtml", "template/monthly.gohtml")))
 
 	app.Router.StaticFileFS("/", "static/html/main.html", http.FS(StaticFiles))
 
@@ -28,15 +28,17 @@ func (app *Application) SetupRouter() (err error) {
 	if app.Config.RateLimiting {
 		log.Println("Enabling ratelimiting")
 		app.Router.GET("/status", app.RatelimiterMiddleware(), app.StatusHandler)
+		app.Router.GET("/monthly", app.RatelimiterMiddleware(), app.MonthlyHandler)
 	} else {
 		app.Router.GET("/status", app.StatusHandler)
+		app.Router.GET("/monthly", app.MonthlyHandler)
 	}
 
 	return
 }
 
 type TemplateInput struct {
-	UserCache
+	UserListeningCache
 
 	Refresh float64
 	Light   bool
@@ -69,7 +71,7 @@ func (app *Application) StatusHandler(c *gin.Context) {
 	}
 
 	var err error
-	cache, exists := app.Cache[input.Username]
+	cache, exists := app.UserListeningCache[input.Username]
 	if !exists || cache.Expired(app.Config.CacheDuration) {
 		log.Printf("Refreshing cache for %s\n", input.Username)
 		cache, err = GetCurrentlyScrobbling(input.Username)
@@ -78,7 +80,7 @@ func (app *Application) StatusHandler(c *gin.Context) {
 			return
 		}
 
-		app.Cache[input.Username] = cache
+		app.UserListeningCache[input.Username] = cache
 	} else {
 		log.Printf("Getting info for %s from cache\n", input.Username)
 	}
@@ -91,7 +93,65 @@ func (app *Application) StatusHandler(c *gin.Context) {
 			Dark:    dark,
 			Dynamic: dynamic,
 
-			UserCache: cache,
+			UserListeningCache: cache,
 		})
 	}
+}
+
+type MonthQuery struct {
+	Theme    string `form:"theme"` // light, dark, dynamic
+	Username string `form:"username" binding:"required"`
+}
+
+type MonthlyTemplateInput struct {
+	UserMonthlyAlbumsCache
+
+	Refresh float64
+	Light   bool
+	Dark    bool
+	Dynamic bool
+}
+
+func (app *Application) MonthlyHandler(c *gin.Context) {
+	var input MonthQuery
+	if err := c.BindQuery(&input); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var light, dark, dynamic bool
+	switch input.Theme {
+	case "light":
+		light = true
+	case "dark":
+		dark = true
+	case "dynamic":
+		dynamic = true
+	default:
+		dynamic = true
+	}
+
+	var err error
+	cache, exists := app.UserMonthlyAlbumsCache[input.Username]
+	if !exists || cache.Expired(app.Config.CacheDuration) {
+		log.Printf("Refreshing monthly plays cache for %s\n", input.Username)
+		cache, err = GetMonthlyArtists(input.Username)
+		if err != nil {
+			c.String(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
+			return
+		}
+
+		app.UserMonthlyAlbumsCache[input.Username] = cache
+	} else {
+		log.Printf("Getting info for %s from monthly cache\n", input.Username)
+	}
+
+	c.HTML(http.StatusOK, "monthly.gohtml", MonthlyTemplateInput{
+		Refresh: app.Config.MonthlyCacheDuration.Seconds(),
+		Light:   light,
+		Dark:    dark,
+		Dynamic: dynamic,
+
+		UserMonthlyAlbumsCache: cache,
+	})
 }

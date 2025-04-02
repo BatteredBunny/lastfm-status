@@ -18,7 +18,13 @@ in
     cacheLength = lib.mkOption {
       type = lib.types.str;
       default = "1m";
-      description = "How long to cache an entry for, accepts a golang time duration";
+      description = "How long to cache a playing status entry for, accepts a golang time duration";
+    };
+
+    monthlyCacheLength = lib.mkOption {
+      type = lib.types.str;
+      default = "1h";
+      description = "How long to cache user top albums for, accepts a golang time duration";
     };
 
     enableRatelimiting = lib.mkEnableOption "Enable ratelimiting on the api" // { default = true; };
@@ -52,7 +58,7 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         PrivateUsers = true;
-        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting}";
+        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --monthly-cache-length=${cfg.monthlyCacheLength} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting}";
         Restart = "always";
       };
       wantedBy = [ "default.target" ];
