@@ -99,7 +99,7 @@ func (app *Application) StatusHandler(c *gin.Context) {
 }
 
 type MonthQuery struct {
-	Theme    string `form:"theme"` // light, dark, dynamic
+	Theme    string `form:"theme"` // bright
 	Username string `form:"username" binding:"required"`
 }
 
@@ -107,9 +107,8 @@ type MonthlyTemplateInput struct {
 	UserMonthlyAlbumsCache
 
 	Refresh float64
-	Light   bool
-	Dark    bool
-	Dynamic bool
+
+	Bright bool
 }
 
 func (app *Application) MonthlyHandler(c *gin.Context) {
@@ -119,17 +118,7 @@ func (app *Application) MonthlyHandler(c *gin.Context) {
 		return
 	}
 
-	var light, dark, dynamic bool
-	switch input.Theme {
-	case "light":
-		light = true
-	case "dark":
-		dark = true
-	case "dynamic":
-		dynamic = true
-	default:
-		dynamic = true
-	}
+	bright := input.Theme == "bright"
 
 	var err error
 	cache, exists := app.UserMonthlyAlbumsCache[input.Username]
@@ -148,9 +137,7 @@ func (app *Application) MonthlyHandler(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "monthly.gohtml", MonthlyTemplateInput{
 		Refresh: app.Config.MonthlyCacheDuration.Seconds(),
-		Light:   light,
-		Dark:    dark,
-		Dynamic: dynamic,
+		Bright:  bright,
 
 		UserMonthlyAlbumsCache: cache,
 	})
