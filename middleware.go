@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth/v8"
 	"github.com/gin-gonic/gin"
 )
 

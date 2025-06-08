@@ -50,6 +50,9 @@ services.lastfm-status = {
     package = inputs.lastfm-status.packages.${builtins.currentSystem}.default;
     cacheLength = "1m";
     monthlyCacheLength = "1h";
+    
     enableRatelimiting = true;
+    reverseProxy = false;
+    trustedProxy = "";
 };
 ```

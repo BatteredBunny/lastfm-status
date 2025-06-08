@@ -10,10 +10,11 @@ import (
 )
 
 func (app *Application) SetupRouter() (err error) {
-	gin.SetMode(gin.ReleaseMode)
-
 	app.Router = gin.Default()
-	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(Templates, "template/status.gohtml", "template/monthly.gohtml")))
+	app.Router.ForwardedByClientIP = app.Config.BehindReverseProxy
+	app.Router.SetTrustedProxies([]string{app.Config.TrustedProxy})
+
+	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(Templates, "template/*.gohtml")))
 
 	app.Router.StaticFileFS("/", "static/html/main.html", http.FS(StaticFiles))
 

@@ -33,6 +33,16 @@ in
       type = lib.types.int;
       description = "Port to run http api on";
     };
+
+    reverseProxy = lib.mkOption {
+      type = lib.types.bool;
+      description = "if running behind reverse proxy";
+    };
+
+    trustedProxy = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -58,9 +68,11 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         PrivateUsers = true;
-        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --monthly-cache-length=${cfg.monthlyCacheLength} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting}";
+        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --monthly-cache-length=${cfg.monthlyCacheLength} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting} ${lib.optionalString cfg.reverseProxy "--reverse-proxy"} ${lib.optionalString (!isNull cfg.trustedProxy) "--trusted-proxy=${cfg.trustedProxy}"}";
         Restart = "always";
       };
+
+      environment.GIN_MODE = "release";
       wantedBy = [ "default.target" ];
     };
   };
