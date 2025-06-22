@@ -1,6 +1,6 @@
 module github.com/BatteredBunny/lastfm-status
 
-go 1.24.3
+go 1.24.4
 
 require (
 	astuart.co/goq v1.0.0
