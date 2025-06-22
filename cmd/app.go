@@ -20,7 +20,6 @@ var Templates embed.FS
 
 type Application struct {
 	UserListeningCache     map[string]UserListeningCache
-	UserMonthlyAlbumsCache map[string]UserMonthlyAlbumsCache
 
 	Router *gin.Engine
 
@@ -31,7 +30,6 @@ type Application struct {
 
 type Config struct {
 	CacheDuration        time.Duration // Currently listening cache duration
-	MonthlyCacheDuration time.Duration // Monthly top artists cache duration
 
 	Port uint
 
@@ -46,7 +44,6 @@ func ParseConfig() (cfg Config) {
 	flag.BoolVar(&cfg.BehindReverseProxy, "reverse-proxy", false, "Set true if behind reverse proxy to make the ratelimiter work")
 	flag.StringVar(&cfg.TrustedProxy, "trusted-proxy", "", "trusted proxy for reverse prox")
 	flag.DurationVar(&cfg.CacheDuration, "cache-length", time.Minute, "how long to cache an entry for")
-	flag.DurationVar(&cfg.MonthlyCacheDuration, "monthly-cache-length", time.Hour, "how long to cache an entry for")
 	flag.BoolVar(&cfg.RateLimiting, "ratelimit", true, "enables ratelimiting for /status api")
 	flag.Parse()
 
@@ -74,7 +71,6 @@ func (app *Application) SetupRatelimiter() {
 func NewApplication() Application {
 	return Application{
 		UserListeningCache:     make(map[string]UserListeningCache),
-		UserMonthlyAlbumsCache: make(map[string]UserMonthlyAlbumsCache),
 		Config:                 ParseConfig(),
 	}
 }

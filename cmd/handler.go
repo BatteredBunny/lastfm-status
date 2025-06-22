@@ -29,10 +29,8 @@ func (app *Application) SetupRouter() (err error) {
 	if app.Config.RateLimiting {
 		log.Println("Enabling ratelimiting")
 		app.Router.GET("/status", app.RatelimiterMiddleware(), app.StatusHandler)
-		app.Router.GET("/monthly", app.RatelimiterMiddleware(), app.MonthlyHandler)
 	} else {
 		app.Router.GET("/status", app.StatusHandler)
-		app.Router.GET("/monthly", app.MonthlyHandler)
 	}
 
 	return
@@ -97,49 +95,4 @@ func (app *Application) StatusHandler(c *gin.Context) {
 			UserListeningCache: cache,
 		})
 	}
-}
-
-type MonthQuery struct {
-	Theme    string `form:"theme"` // bright
-	Username string `form:"username" binding:"required"`
-}
-
-type MonthlyTemplateInput struct {
-	UserMonthlyAlbumsCache
-
-	Refresh float64
-
-	Bright bool
-}
-
-func (app *Application) MonthlyHandler(c *gin.Context) {
-	var input MonthQuery
-	if err := c.BindQuery(&input); err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
-
-	bright := input.Theme == "bright"
-
-	var err error
-	cache, exists := app.UserMonthlyAlbumsCache[input.Username]
-	if !exists || cache.Expired(app.Config.CacheDuration) {
-		log.Printf("Refreshing monthly plays cache for %s\n", input.Username)
-		cache, err = GetMonthlyArtists(input.Username)
-		if err != nil {
-			c.String(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
-			return
-		}
-
-		app.UserMonthlyAlbumsCache[input.Username] = cache
-	} else {
-		log.Printf("Getting info for %s from monthly cache\n", input.Username)
-	}
-
-	c.HTML(http.StatusOK, "monthly.gohtml", MonthlyTemplateInput{
-		Refresh: app.Config.MonthlyCacheDuration.Seconds(),
-		Bright:  bright,
-
-		UserMonthlyAlbumsCache: cache,
-	})
 }

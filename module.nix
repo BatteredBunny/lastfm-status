@@ -21,12 +21,6 @@ in
       description = "How long to cache a playing status entry for, accepts a golang time duration";
     };
 
-    monthlyCacheLength = lib.mkOption {
-      type = lib.types.str;
-      default = "1h";
-      description = "How long to cache user top albums for, accepts a golang time duration";
-    };
-
     enableRatelimiting = lib.mkEnableOption "Enable ratelimiting on the api" // { default = true; };
 
     port = lib.mkOption {
@@ -68,7 +62,7 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         PrivateUsers = true;
-        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --monthly-cache-length=${cfg.monthlyCacheLength} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting} ${lib.optionalString cfg.reverseProxy "--reverse-proxy"} ${lib.optionalString (!isNull cfg.trustedProxy) "--trusted-proxy=${cfg.trustedProxy}"}";
+        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting} ${lib.optionalString cfg.reverseProxy "--reverse-proxy"} ${lib.optionalString (!isNull cfg.trustedProxy) "--trusted-proxy=${cfg.trustedProxy}"}";
         Restart = "always";
       };
 
