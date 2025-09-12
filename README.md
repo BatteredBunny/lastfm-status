@@ -1,10 +1,10 @@
 # lastfm-status
 
-Simple api for showing currently scrobbling song on website
+Simple html widget showing the currently scrobbling song on your website
 
 ![Example iframe usage](example.png)
 
-## Embedding it into your site
+## Adding the widget to your site
 
 ```html
 <iframe
