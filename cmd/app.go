@@ -19,7 +19,7 @@ var StaticFiles embed.FS
 var Templates embed.FS
 
 type Application struct {
-	UserListeningCache     map[string]UserListeningCache
+	UserListeningCache map[string]UserListeningCache
 
 	Router *gin.Engine
 
@@ -29,7 +29,7 @@ type Application struct {
 }
 
 type Config struct {
-	CacheDuration        time.Duration // Currently listening cache duration
+	CacheDuration time.Duration // Currently listening cache duration
 
 	Port uint
 
@@ -70,8 +70,8 @@ func (app *Application) SetupRatelimiter() {
 
 func NewApplication() Application {
 	return Application{
-		UserListeningCache:     make(map[string]UserListeningCache),
-		Config:                 ParseConfig(),
+		UserListeningCache: make(map[string]UserListeningCache),
+		Config:             ParseConfig(),
 	}
 }
 
