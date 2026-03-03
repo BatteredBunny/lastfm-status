@@ -1,7 +1,8 @@
-{ pkgs
-, config ? pkgs.config
-, lib ? pkgs.lib
-, ...
+{
+  pkgs,
+  config ? pkgs.config,
+  lib ? pkgs.lib,
+  ...
 }:
 let
   cfg = config.services.lastfm-status;
@@ -21,7 +22,9 @@ in
       description = "How long to cache a playing status entry for, accepts a golang time duration";
     };
 
-    enableRatelimiting = lib.mkEnableOption "Enable ratelimiting on the api" // { default = true; };
+    enableRatelimiting = lib.mkEnableOption "Enable ratelimiting on the api" // {
+      default = true;
+    };
 
     port = lib.mkOption {
       type = lib.types.int;
@@ -62,7 +65,9 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         PrivateUsers = true;
-        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting} ${lib.optionalString cfg.reverseProxy "--reverse-proxy"} ${lib.optionalString (!isNull cfg.trustedProxy) "--trusted-proxy=${cfg.trustedProxy}"}";
+        ExecStart = "${lib.getExe cfg.package} --port=${toString cfg.port} --cache-length=${cfg.cacheLength} --ratelimit=${toString cfg.enableRatelimiting} ${lib.optionalString cfg.reverseProxy "--reverse-proxy"} ${
+          lib.optionalString (!isNull cfg.trustedProxy) "--trusted-proxy=${cfg.trustedProxy}"
+        }";
         Restart = "always";
       };
 
