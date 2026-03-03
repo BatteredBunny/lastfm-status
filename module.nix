@@ -28,11 +28,13 @@ in
 
     port = lib.mkOption {
       type = lib.types.int;
+      default = 8080;
       description = "Port to run http api on";
     };
 
     reverseProxy = lib.mkOption {
       type = lib.types.bool;
+      default = false;
       description = "if running behind reverse proxy";
     };
 
