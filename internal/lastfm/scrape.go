@@ -1,19 +1,18 @@
-package cmd
+package lastfm
 
 import (
 	"bytes"
 	"io"
 	"net/http"
-	"time"
 
 	"astuart.co/goq"
 )
 
-type RawPageInfo struct {
-	CurrentlyScrobblingSong *RawCurrentlyScrobbling `goquery:".chartlist-row--now-scrobbling"`
+type rawPageInfo struct {
+	CurrentlyScrobblingSong *rawCurrentlyScrobbling `goquery:".chartlist-row--now-scrobbling"`
 }
 
-type RawCurrentlyScrobbling struct {
+type rawCurrentlyScrobbling struct {
 	SongTitle   string `goquery:".chartlist-name a"`
 	SongUrl     string `goquery:".chartlist-name a,[href]"`
 	AuthorName  string `goquery:".chartlist-artist a"`
@@ -21,8 +20,18 @@ type RawCurrentlyScrobbling struct {
 	CoverArtUrl string `goquery:".chartlist-image .cover-art img,[src]"`
 }
 
+type Scrobble struct {
+	SongTitle   string
+	SongUrl     string
+	AuthorName  string
+	AuthorUrl   string
+	CoverArtUrl string
+	AccountName string
+	AccountUrl  string
+}
+
 // GetCurrentlyScrobbling fetches info from last.fm
-func GetCurrentlyScrobbling(username string) (c UserListeningCache, err error) {
+func GetCurrentlyScrobbling(username string) (c Scrobble, err error) {
 	accountUrl := "https://www.last.fm/user/" + username
 	resp, err := http.Get(accountUrl)
 	if err != nil {
@@ -34,12 +43,12 @@ func GetCurrentlyScrobbling(username string) (c UserListeningCache, err error) {
 		return
 	}
 
-	var rawInfo RawPageInfo
+	var rawInfo rawPageInfo
 	if err = goq.NewDecoder(bytes.NewReader(b)).Decode(&rawInfo); err != nil {
 		return
 	}
 
-	c = UserListeningCache{
+	c = Scrobble{
 		SongTitle:   rawInfo.CurrentlyScrobblingSong.SongTitle,
 		SongUrl:     "https://www.last.fm" + rawInfo.CurrentlyScrobblingSong.SongUrl,
 		AuthorName:  rawInfo.CurrentlyScrobblingSong.AuthorName,
@@ -47,8 +56,6 @@ func GetCurrentlyScrobbling(username string) (c UserListeningCache, err error) {
 		CoverArtUrl: rawInfo.CurrentlyScrobblingSong.CoverArtUrl,
 		AccountName: username,
 		AccountUrl:  accountUrl,
-
-		CacheTime: time.Now(),
 	}
 
 	return

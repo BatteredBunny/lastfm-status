@@ -1,7 +1,6 @@
-package cmd
+package internal
 
 import (
-	"embed"
 	"flag"
 	"fmt"
 	"log"
@@ -12,20 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed static
-var StaticFiles embed.FS
-
-//go:embed template
-var Templates embed.FS
-
 type Application struct {
-	UserListeningCache map[string]UserListeningCache
+	userListeningCache map[string]userListeningCache
 
-	Router *gin.Engine
-
-	Ratelimiter *limiter.Limiter
-
-	Config Config
+	router      *gin.Engine
+	ratelimiter *limiter.Limiter
+	Config      Config
 }
 
 type Config struct {
@@ -39,7 +30,7 @@ type Config struct {
 	TrustedProxy       string
 }
 
-func ParseConfig() (cfg Config) {
+func parseConfig() (cfg Config) {
 	flag.UintVar(&cfg.Port, "port", 8080, "port to run server on")
 	flag.BoolVar(&cfg.BehindReverseProxy, "reverse-proxy", false, "Set true if behind reverse proxy to make the ratelimiter work")
 	flag.StringVar(&cfg.TrustedProxy, "trusted-proxy", "", "trusted proxy for reverse prox")
@@ -50,18 +41,18 @@ func ParseConfig() (cfg Config) {
 	return cfg
 }
 
-func (app *Application) SetupRatelimiter() {
+func (app *Application) setupRatelimiter() {
 	if app.Config.RateLimiting {
-		app.Ratelimiter = tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+		app.ratelimiter = tollbooth.NewLimiter(4, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
 	}
 
 	if app.Config.BehindReverseProxy {
-		app.Ratelimiter.SetIPLookup(limiter.IPLookup{
+		app.ratelimiter.SetIPLookup(limiter.IPLookup{
 			Name:           "X-Forwarded-For",
 			IndexFromRight: 0,
 		})
 	} else {
-		app.Ratelimiter.SetIPLookup(limiter.IPLookup{
+		app.ratelimiter.SetIPLookup(limiter.IPLookup{
 			Name:           "RemoteAddr",
 			IndexFromRight: 0,
 		})
@@ -70,18 +61,18 @@ func (app *Application) SetupRatelimiter() {
 
 func NewApplication() Application {
 	return Application{
-		UserListeningCache: make(map[string]UserListeningCache),
-		Config:             ParseConfig(),
+		userListeningCache: make(map[string]userListeningCache),
+		Config:             parseConfig(),
 	}
 }
 
 func (app *Application) Run() {
-	app.SetupRatelimiter()
-	if err := app.SetupRouter(); err != nil {
+	app.setupRatelimiter()
+	if err := app.setupRouter(); err != nil {
 		log.Fatal(err)
 	}
 
-	go app.CacheCleaner()
+	go app.cacheCleaner()
 
-	log.Fatal(app.Router.Run(fmt.Sprintf(":%d", app.Config.Port)))
+	log.Fatal(app.router.Run(fmt.Sprintf(":%d", app.Config.Port)))
 }

@@ -1,27 +1,22 @@
-package cmd
+package internal
 
 import (
 	"log"
 	"time"
+
+	"github.com/BatteredBunny/lastfm-status/internal/lastfm"
 )
 
-type UserListeningCache struct {
-	SongTitle   string
-	SongUrl     string
-	AuthorName  string
-	AuthorUrl   string
-	CoverArtUrl string
-	AccountName string
-	AccountUrl  string
-
+type userListeningCache struct {
+	lastfm.Scrobble
 	CacheTime time.Time
 }
 
-func (u UserListeningCache) Expired(CacheDuration time.Duration) bool {
+func (u userListeningCache) Expired(CacheDuration time.Duration) bool {
 	return u.CacheTime.Before(time.Now().Add(-CacheDuration))
 }
 
-func (app *Application) CacheCleaner() {
+func (app *Application) cacheCleaner() {
 	log.Println("Starting cache cleaner")
 
 	for {
@@ -29,9 +24,9 @@ func (app *Application) CacheCleaner() {
 		log.Println("Starting hourly cleaning")
 
 		var deleteCounter int
-		for name, cache := range app.UserListeningCache {
+		for name, cache := range app.userListeningCache {
 			if cache.Expired(app.Config.CacheDuration) {
-				delete(app.UserListeningCache, name)
+				delete(app.userListeningCache, name)
 				deleteCounter++
 			}
 		}
