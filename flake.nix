@@ -25,7 +25,7 @@
     in
     {
       overlays.default = final: prev: {
-        lastfm-status = self.packages.${final.stdenv.system}.lastfm-status;
+        lastfm-status = final.callPackage ./build.nix { };
       };
 
       nixosModules.default = import ./module.nix;
@@ -44,14 +44,27 @@
         }
       );
 
-      packages = forAllSystems (
+      checks = forAllSystems (
         system:
         let
           pkgs = nixpkgsFor.${system};
         in
-        rec {
-          lastfm-status = default;
-          default = pkgs.callPackage ./build.nix { };
+        {
+          service = pkgs.callPackage ./test.nix {
+            inherit self;
+          };
+        }
+      );
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+          overlay = lib.makeScope pkgs.newScope (final: self.overlays.default final pkgs);
+        in
+        {
+          inherit (overlay) lastfm-status;
+          default = overlay.lastfm-status;
         }
       );
     };
